@@ -38,6 +38,9 @@ bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bi
 asks = []
 bids = []
 
+def populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price):
+
+
 # get last close for param: ticker
 def getQuote(ticker):
     response = (requests.get("https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + ticker + "&apikey=" + alphavantage_api_key))
