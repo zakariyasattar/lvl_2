@@ -21,14 +21,14 @@ driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option
 driver.set_window_position(-10000,0)
 
 # pull data from cboe
-URL = 'https://markets.cboe.com/us/equities/market_statistics/book_viewer/'
+URL = 'https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx'
 page = requests.get(URL)
 cboe = BeautifulSoup(page.content, 'html.parser')
 
-driver.get("https://markets.cboe.com/us/equities/market_statistics/book_viewer/")
+driver.get("https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx")
 html = driver.execute_script('return document.body.innerHTML;')
 cboeData = BeautifulSoup(page.content, 'html.parser')
-print([entry.text for entry in cboeData.findAll("div", {"class": "app__bd"})])
+print([entry.text for entry in cboeData.findAll("tr", {"class": "book-viewer-data-row"})])
 
 wholeTable = cboe.findAll("div", {"class": "app__bd"})
 ticker = (cboe.find("input", {"id": "symbol0"}).get('value'))
