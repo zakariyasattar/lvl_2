@@ -52,6 +52,7 @@ def populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price):
 
 # Isolate necessary data
 ticker = (cboe_data.find("input", {"id": "symbol0"}).get('value'))
+print(ticker)
 
 bid_share_count = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-shares"}))
 ask_share_count = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-shares"}))
