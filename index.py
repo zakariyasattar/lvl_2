@@ -61,10 +61,18 @@ ask_price = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__as
 bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-price book-viewer-price"}))
 
 def decide(asks, bids):
+    totalAskShares = 0
+    totalBidShares = 0
+
     for ask in asks:
-        print(ask)
+        totalAskShares = totalAskShares + (int(ask[0].replace(',', '')))
     for bid in bids:
-        print(bid)
+        totalBidShares = totalBidShares + (int(bid[0].replace(',', '')))
+
+    if(totalAskShares > totalBidShares):
+        print("ask")
+    else:
+        print("bid")
 
 # get last close for param: ticker
 def getQuote(symbol):
