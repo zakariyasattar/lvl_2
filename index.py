@@ -13,7 +13,8 @@ import numpy as np
 """
     TODO:
 
-    Finish decide
+    work on stop loss,
+    price to sell at
 """
 
 # Init Webdriver
@@ -90,9 +91,9 @@ def decide(asks, bids):
         bid_share_count = bid_share_count + bid_shares
 
     if(ask_share_count > bid_share_count):
-        print(asks[selected_ask])
+        submitOrder("buy", ticker)
     else:
-        print(bids[selected_bid])
+        submitOrder("sell", ticker)
 
 # get last close for param: ticker
 def getQuote(symbol):
