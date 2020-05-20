@@ -92,8 +92,6 @@ def decide(asks, bids):
 
     if(ask_share_count > bid_share_count):
         submitOrder("buy", ticker)
-    else:
-        submitOrder("sell", ticker)
 
 # get last close for param: ticker
 def getQuote(symbol):
