@@ -29,8 +29,9 @@ driver.set_window_position(-10000,0)
 
 # ALPACA API INIT
 api = tradeapi.REST('PKWS07EUH6HN0TVT14O2', 'A5Ffk2KHJ6UO10xiEqwrsRzh4G68e5Am3OlQ421m', "https://paper-api.alpaca.markets", api_version='v2')
-alphavantage_api_key = "L9ORMXCSUYTKB325"
-iex_api_key = "Tpk_4bd3eca6cc5d45418180c6881292b18e"
+
+iex_api_key = "pk_0ebcc25609b045788b2b29b9c57f1bb6"
+iex_sandbox = "Tpk_4bd3eca6cc5d45418180c6881292b18e"
 
 # pull data from cboe: https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx
 driver.get("https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx")
@@ -97,26 +98,28 @@ def decide(asks, bids):
 
     else:
         # DETERMINE RIGHT PRICE TO SELL AT
-        print("hello")
+        print(api.list_positions())
 
 # get last close for param: ticker
 def getQuote(symbol):
     # replace sandbox with cloud and replace api key
-    iex_url = "https://sandbox.iexapis.com/stable/stock/" + symbol + "/quote?token=" + iex_api_key
+    iex_url = "https://cloud.iexapis.com/stable/stock/" + symbol + "/quote?token=" + iex_api_key
     iex_data = requests.get(iex_url).content
 
     price_data = json.loads(json.dumps(json.loads(iex_data.decode('utf8').replace("'", '"')), indent=4, sort_keys=True))
     return (price_data["latestPrice"])
 
-def submitOrder(side, ticker):
+def submitOrder(ticker):
     buying_power = (float(api.get_account().buying_power))
     price = getQuote(ticker)
 
     qty = round(buying_power / price)
-    api.submit_order(ticker, qty, side, "market", "day")
-    api.submit_order(ticker, qty, 'sell', "stop", "day", price - (price * .03))
 
-    print("Market order of | " + str(qty) + " " + ticker + " " + side + " | completed.")
+    api.submit_order(ticker, qty, "buy", "market", "day")
+    time.sleep(2)
+    api.submit_order(ticker, qty, 'sell', "stop", "day", stop_price = price - (price * .03))
+
+    print("Market order of | " + str(qty) + " " + ticker + " " + "buy" + " | completed.")
 
 #
 # while True:
@@ -124,4 +127,5 @@ def submitOrder(side, ticker):
 #         populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price)
 #     time.sleep(5)
 
-decide("e", "d")
+
+submitOrder("SPY")
