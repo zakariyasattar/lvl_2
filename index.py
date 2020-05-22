@@ -14,6 +14,7 @@ import numpy as np
     TODO:
 
     work on stop loss,
+    check if position is already open
     price to sell at
 """
 
@@ -62,36 +63,41 @@ ask_price = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__as
 bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-price book-viewer-price"}))
 
 def decide(asks, bids):
-    ask_share_count = 0
-    bid_share_count = 0
-    selected_ask = 0
-    selected_bid = 0
+    if(len(api.list_positions()) == 0):
+        ask_share_count = 0
+        bid_share_count = 0
+        selected_ask = 0
+        selected_bid = 0
 
-    asks.reverse()
-    bids.reverse()
+        asks.reverse()
+        bids.reverse()
 
-    for ask in asks:
-        ask_shares = (int(ask[0].replace(',', '')))
+        for ask in asks:
+            ask_shares = (int(ask[0].replace(',', '')))
 
-        if(asks.index(ask) > 0):
-            if(ask_shares > initial_ask_share_count):
-                selected_ask = asks.index(ask)
-        else:
-            initial_ask_share_count = ask_shares
-        ask_share_count = ask_share_count + ask_shares
+            if(asks.index(ask) > 0):
+                if(ask_shares > initial_ask_share_count):
+                    selected_ask = asks.index(ask)
+            else:
+                initial_ask_share_count = ask_shares
+            ask_share_count = ask_share_count + ask_shares
 
-    for bid in (bids):
-        bid_shares = (int(ask[0].replace(',', '')))
+        for bid in (bids):
+            bid_shares = (int(ask[0].replace(',', '')))
 
-        if(bids.index(bid) > 0):
-            if(bid_shares > initial_bid_share_count):
-                selected_bid = bids.index(bid)
-        else:
-            initial_bid_share_count = bid_shares
-        bid_share_count = bid_share_count + bid_shares
+            if(bids.index(bid) > 0):
+                if(bid_shares > initial_bid_share_count):
+                    selected_bid = bids.index(bid)
+            else:
+                initial_bid_share_count = bid_shares
+            bid_share_count = bid_share_count + bid_shares
 
-    if(ask_share_count > bid_share_count):
-        submitOrder("buy", ticker)
+        if(ask_share_count > bid_share_count):
+            submitOrder("buy", ticker)
+
+    else:
+        # DETERMINE RIGHT PRICE TO SELL AT
+        print("hello")
 
 # get last close for param: ticker
 def getQuote(symbol):
@@ -104,13 +110,18 @@ def getQuote(symbol):
 
 def submitOrder(side, ticker):
     buying_power = (float(api.get_account().buying_power))
-    qty = round(buying_power / getQuote(ticker))
+    price = getQuote(ticker)
 
+    qty = round(buying_power / price)
     api.submit_order(ticker, qty, side, "market", "day")
+    api.submit_order(ticker, qty, 'sell', "stop", "day", price - (price * .03))
+
     print("Market order of | " + str(qty) + " " + ticker + " " + side + " | completed.")
 
+#
+# while True:
+#     if(api.get_clock().is_open):
+#         populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price)
+#     time.sleep(5)
 
-while True:
-    if(api.get_clock().is_open):
-        populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price)
-    time.sleep(5)
+decide("e", "d")
