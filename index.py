@@ -64,14 +64,14 @@ ask_price = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__as
 bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-price book-viewer-price"}))
 
 def decide(asks, bids):
+    asks.reverse()
+    bids.reverse()
+
     if(len(api.list_positions()) == 0):
         ask_share_count = 0
         bid_share_count = 0
         selected_ask = 0
         selected_bid = 0
-
-        asks.reverse()
-        bids.reverse()
 
         for ask in asks:
             ask_shares = (int(ask[0].replace(',', '')))
@@ -94,11 +94,23 @@ def decide(asks, bids):
             bid_share_count = bid_share_count + bid_shares
 
         if(ask_share_count > bid_share_count):
-            submitOrder("buy", ticker)
+            submitOrder(ticker)
 
     else:
         # DETERMINE RIGHT PRICE TO SELL AT
-        print(api.list_positions())
+
+        #### TO DO: Find what ask_target_price is
+        ####
+        for ask in asks:
+            ask_shares = (int(ask[0].replace(',', '')))
+            ask_target_price = (int(ask[1].replace(',', '')))
+
+            if((ask_shares * ask_target_price) > 10000):
+                api.submit_order(ticker, qty, "sell", "limit", "day", limit_price = ask_target_price)
+
+                print("Sold " + str(qty) + " shares of " + ticker)
+
+        # print(api.list_positions())
 
 # get last close for param: ticker
 def getQuote(symbol):
@@ -126,6 +138,3 @@ def submitOrder(ticker):
 #     if(api.get_clock().is_open):
 #         populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price)
 #     time.sleep(5)
-
-
-submitOrder("SPY")
