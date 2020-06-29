@@ -1,6 +1,7 @@
 import sys
 import time
 import requests
+import math
 from bs4 import BeautifulSoup
 import alpaca_trade_api as tradeapi
 from iexfinance.stocks import Stock
@@ -55,7 +56,6 @@ def populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price):
 
 # Isolate necessary data
 ticker = (cboe_data.find("input", {"id": "symbol0"}).get('value'))
-print(ticker)
 
 bid_share_count = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-shares"}))
 ask_share_count = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-shares"}))
@@ -98,19 +98,19 @@ def decide(asks, bids):
 
     else:
         # DETERMINE RIGHT PRICE TO SELL AT
+        qty = ((api.get_position(ticker)).qty)
 
-        #### TO DO: Find what ask_target_price is
-        ####
         for ask in asks:
             ask_shares = (int(ask[0].replace(',', '')))
-            ask_target_price = (int(ask[1].replace(',', '')))
+            ask_target_price = (float(ask[1].replace(',', '')))
 
-            if((ask_shares * ask_target_price) > 10000):
+            if((ask_shares * ask_target_price) > 5000):
+                api.cancel_all_orders()
+                time.sleep(2)
                 api.submit_order(ticker, qty, "sell", "limit", "day", limit_price = ask_target_price)
 
+                print(ask_target_price)
                 print("Sold " + str(qty) + " shares of " + ticker)
-
-        # print(api.list_positions())
 
 # get last close for param: ticker
 def getQuote(symbol):
@@ -125,7 +125,7 @@ def submitOrder(ticker):
     buying_power = (float(api.get_account().buying_power))
     price = getQuote(ticker)
 
-    qty = round(buying_power / price)
+    qty = math.floor(buying_power / price)
 
     api.submit_order(ticker, qty, "buy", "market", "day")
     time.sleep(2)
@@ -133,8 +133,8 @@ def submitOrder(ticker):
 
     print("Market order of | " + str(qty) + " " + ticker + " " + "buy" + " | completed.")
 
-#
-# while True:
-#     if(api.get_clock().is_open):
-#         populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price)
-#     time.sleep(5)
+
+while True:
+    if(api.get_clock().is_open):
+        populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price)
+    time.sleep(5)
