@@ -14,9 +14,8 @@ import numpy as np
 """
     TODO:
 
-    work on stop loss,
-    check if position is already open
-    price to sell at
+    Once one target price is found and is unchanching, stick with it
+    keep making sure that asks > bids even after position is assumed
 """
 
 # Init Webdriver
@@ -104,7 +103,7 @@ def decide(asks, bids):
             ask_shares = (int(ask[0].replace(',', '')))
             ask_target_price = (float(ask[1].replace(',', '')))
 
-            if((ask_shares * ask_target_price) > 5000):
+            if((ask_shares * ask_target_price) > 5000 and len(api.list_positions()) > 0):
                 api.cancel_all_orders()
                 time.sleep(2)
                 api.submit_order(ticker, qty, "sell", "limit", "day", limit_price = ask_target_price)
