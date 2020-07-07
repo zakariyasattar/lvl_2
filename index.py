@@ -97,19 +97,35 @@ def decide(asks, bids):
 
     else:
         # DETERMINE RIGHT PRICE TO SELL AT
-        qty = ((api.get_position(ticker)).qty)
+        qty = api.get_position(ticker).qty
+
+        #####
+        target_price = api.get_position(ticker).limit_price
+        #####
 
         for ask in asks:
-            ask_shares = (int(ask[0].replace(',', '')))
-            ask_target_price = (float(ask[1].replace(',', '')))
+            if(target_price == ""):
+                ask_shares = (int(ask[0].replace(',', '')))
+                ask_target_price = (float(ask[1].replace(',', '')))
 
-            if((ask_shares * ask_target_price) > 5000 and len(api.list_positions()) > 0):
-                api.cancel_all_orders()
-                time.sleep(2)
-                api.submit_order(ticker, qty, "sell", "limit", "day", limit_price = ask_target_price)
+                if((ask_shares * ask_target_price) > 5000 and len(api.list_positions()) > 0):
+                    api.cancel_all_orders()
+                    time.sleep(2)
+                    api.submit_order(ticker, qty, "sell", "limit", "day", limit_price = ask_target_price)
 
-                print(ask_target_price)
-                print("Sold " + str(qty) + " shares of " + ticker)
+                    print(ask_target_price)
+                    print("Sold " + str(qty) + " shares of " + ticker)
+            else:
+
+                #PSUEDO CHECK UNDER REAL CIRCUMSTANCES
+                ask_shares = (int(ask[0].replace(',', '')))
+                ask_target_price = (float(ask[1].replace(',', '')))
+
+                if(ask_target_price == target_price):
+                    if(ask_shares * ask_target_price > 5000):
+                    else:
+                        api.cancel_all_orders()
+
 
 # get last close for param: ticker
 def getQuote(symbol):
