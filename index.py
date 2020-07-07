@@ -14,8 +14,8 @@ import numpy as np
 """
     TODO:
 
-    Once one target price is found and is unchanching, stick with it
-    keep making sure that asks > bids even after position is assumed
+    PSUEDO: Once one target price is found and is unchanching, stick with it
+    keep making sure that asks > bids even after position is assumed (make a routine check function)
 """
 
 # Init Webdriver
