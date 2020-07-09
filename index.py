@@ -14,8 +14,8 @@ import numpy as np
 """
     TODO:
 
-    PSUEDO: Once one target price is found and is unchanching, stick with it
-    keep making sure that asks > bids even after position is assumed (make a routine check function)
+    TEST: Once one target price is found and is unchanching, stick with it
+    TEST: keep making sure that asks > bids even after position is assumed (make a routine check function)
 """
 
 # Init Webdriver
@@ -62,70 +62,85 @@ ask_share_count = (cboe_data.findAll("td", {"class": "book-viewer__ask book-view
 ask_price = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-price book-viewer-price"}))
 bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-price book-viewer-price"}))
 
+def count_asks():
+    ask_share_count = 0
+    selected_ask = 0
+
+    for ask in asks:
+        ask_shares = (int(ask[0].replace(',', '')))
+
+        if(asks.index(ask) > 0):
+            if(ask_shares > initial_ask_share_count):
+                selected_ask = asks.index(ask)
+        else:
+            initial_ask_share_count = ask_shares
+        ask_share_count = ask_share_count + ask_shares
+    return ask_share_count
+
+def count_bids():
+    selected_bid = 0
+    bid_share_count = 0
+
+    for bid in (bids):
+        bid_shares = (int(ask[0].replace(',', '')))
+
+        if(bids.index(bid) > 0):
+            if(bid_shares > initial_bid_share_count):
+                selected_bid = bids.index(bid)
+        else:
+            initial_bid_share_count = bid_shares
+        bid_share_count = bid_share_count + bid_shares
+    return ask_share_count
+
 def decide(asks, bids):
     asks.reverse()
     bids.reverse()
 
     if(len(api.list_positions()) == 0):
-        ask_share_count = 0
-        bid_share_count = 0
-        selected_ask = 0
-        selected_bid = 0
-
-        for ask in asks:
-            ask_shares = (int(ask[0].replace(',', '')))
-
-            if(asks.index(ask) > 0):
-                if(ask_shares > initial_ask_share_count):
-                    selected_ask = asks.index(ask)
-            else:
-                initial_ask_share_count = ask_shares
-            ask_share_count = ask_share_count + ask_shares
-
-        for bid in (bids):
-            bid_shares = (int(ask[0].replace(',', '')))
-
-            if(bids.index(bid) > 0):
-                if(bid_shares > initial_bid_share_count):
-                    selected_bid = bids.index(bid)
-            else:
-                initial_bid_share_count = bid_shares
-            bid_share_count = bid_share_count + bid_shares
+        ask_share_count = count_asks()
+        bid_share_count = count_bids()
 
         if(ask_share_count > bid_share_count):
             submitOrder(ticker)
 
     else:
-        # DETERMINE RIGHT PRICE TO SELL AT
-        qty = api.get_position(ticker).qty
+        if(count_asks() > count_bids()):
+            qty = api.get_position(ticker).qty
 
-        #####
-        target_price = api.get_position(ticker).limit_price
-        #####
+            api.cancel_all_orders()
+            api.submit_order(ticker, qty, "sell", "market", "day")
 
-        for ask in asks:
-            if(target_price == ""):
-                ask_shares = (int(ask[0].replace(',', '')))
-                ask_target_price = (float(ask[1].replace(',', '')))
+        else:
+            # DETERMINE RIGHT PRICE TO SELL AT
 
-                if((ask_shares * ask_target_price) > 5000 and len(api.list_positions()) > 0):
-                    api.cancel_all_orders()
-                    time.sleep(2)
-                    api.submit_order(ticker, qty, "sell", "limit", "day", limit_price = ask_target_price)
+            if(count_asks > )
 
-                    print(ask_target_price)
-                    print("Sold " + str(qty) + " shares of " + ticker)
-            else:
+            ##### PSUEDO CHECK
+            target_price = api.get_position(ticker).limit_price
+            #####
 
-                #PSUEDO CHECK UNDER REAL CIRCUMSTANCES
-                ask_shares = (int(ask[0].replace(',', '')))
-                ask_target_price = (float(ask[1].replace(',', '')))
+            for ask in asks:
+                if(target_price == ""):
+                    ask_shares = (int(ask[0].replace(',', '')))
+                    ask_target_price = (float(ask[1].replace(',', '')))
 
-                if(ask_target_price == target_price):
-                    if(ask_shares * ask_target_price > 5000):
-                    else:
+                    if((ask_shares * ask_target_price) > 5000 and len(api.list_positions()) > 0):
                         api.cancel_all_orders()
+                        time.sleep(2)
+                        api.submit_order(ticker, qty, "sell", "limit", "day", limit_price = ask_target_price)
 
+                        print(ask_target_price)
+                        print("Sold " + str(qty) + " shares of " + ticker)
+                else:
+
+                    #PSUEDO CHECK UNDER REAL CIRCUMSTANCES
+                    ask_shares = (int(ask[0].replace(',', '')))
+                    ask_target_price = (float(ask[1].replace(',', '')))
+
+                    if(ask_target_price == target_price):
+                        if(ask_shares * ask_target_price > 5000):
+                        else:
+                            api.cancel_all_orders()
 
 # get last close for param: ticker
 def getQuote(symbol):
