@@ -18,25 +18,51 @@ import numpy as np
     TEST: keep making sure that asks > bids even after position is assumed (make a routine check function)
 """
 
-# Init Webdriver
-options = webdriver.ChromeOptions()
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
-options.add_argument("disable-gpu")
-options.add_argument("--log-level=3")
-driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
-driver.set_window_position(-10000,0)
+
 
 # ALPACA API INIT
-api = tradeapi.REST('PKWS07EUH6HN0TVT14O2', 'A5Ffk2KHJ6UO10xiEqwrsRzh4G68e5Am3OlQ421m', "https://paper-api.alpaca.markets", api_version='v2')
+api = tradeapi.REST('PK02Q77ZCTLI1J45KM1Y', '52eanBi5yysZBVQh9Ki8zdcv4PCPjp3zOJ2fXuMP', "https://paper-api.alpaca.markets", api_version='v2')
 
 iex_api_key = "pk_0ebcc25609b045788b2b29b9c57f1bb6"
 iex_sandbox = "Tpk_4bd3eca6cc5d45418180c6881292b18e"
 
-# pull data from cboe: https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx
-driver.get("https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx")
-html = driver.execute_script('return document.body.innerHTML;')
-cboe_data = BeautifulSoup(html, 'lxml')
+def initData():
+    global html
+    global cboe_data
+
+    # Isolate necessary data
+    global ticker
+
+    global bid_share_count
+    global ask_share_count
+
+    global ask_price
+    global bid_price
+    global genji
+
+    # Init Webdriver
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    options.add_argument('window-size=1920x1080')
+    options.add_argument("disable-gpu")
+    options.add_argument("--log-level=3")
+    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
+    driver.set_window_position(-10000,0)
+
+    # pull data from cboe: https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx
+    driver.get("https://markets.cboe.com/us/equities/market_statistics/book/?mkt=edgx")
+    html = driver.execute_script('return document.body.innerHTML;')
+    cboe_data = BeautifulSoup(html, 'lxml')
+
+    # Isolate necessary data
+    ticker = (cboe_data.find("input", {"id": "symbol0"}).get('value'))
+
+    bid_share_count = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-shares"}))
+    ask_share_count = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-shares"}))
+
+    ask_price = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-price book-viewer-price"}))
+    bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-price book-viewer-price"}))
+    genji = "goodbye"
 
 # Populate bids and asks arrays with order size data
 def populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price):
@@ -51,18 +77,11 @@ def populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price):
         asks.append([])
         asks[x].append(ask_share_count[x].text)
         asks[x].append(ask_price[x].text)
+
+    initData()
     decide(asks, bids)
 
-# Isolate necessary data
-ticker = (cboe_data.find("input", {"id": "symbol0"}).get('value'))
-
-bid_share_count = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-shares"}))
-ask_share_count = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-shares"}))
-
-ask_price = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-price book-viewer-price"}))
-bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-price book-viewer-price"}))
-
-def count_asks():
+def count_asks(asks):
     ask_share_count = 0
     selected_ask = 0
 
@@ -77,12 +96,12 @@ def count_asks():
         ask_share_count = ask_share_count + ask_shares
     return ask_share_count
 
-def count_bids():
+def count_bids(bids):
     selected_bid = 0
     bid_share_count = 0
 
     for bid in (bids):
-        bid_shares = (int(ask[0].replace(',', '')))
+        bid_shares = (int(bid[0].replace(',', '')))
 
         if(bids.index(bid) > 0):
             if(bid_shares > initial_bid_share_count):
@@ -90,21 +109,21 @@ def count_bids():
         else:
             initial_bid_share_count = bid_shares
         bid_share_count = bid_share_count + bid_shares
-    return ask_share_count
+    return bid_share_count
 
 def decide(asks, bids):
     asks.reverse()
     bids.reverse()
 
     if(len(api.list_positions()) == 0):
-        ask_share_count = count_asks()
-        bid_share_count = count_bids()
+        ask_share_count = count_asks(asks)
+        bid_share_count = count_bids(bids)
 
         if(ask_share_count > bid_share_count):
             submitOrder(ticker)
 
     else:
-        if(count_asks() > count_bids()):
+        if(count_asks(asks) > count_bids(bids)):
             qty = api.get_position(ticker).qty
 
             api.cancel_all_orders()
@@ -112,12 +131,7 @@ def decide(asks, bids):
 
         else:
             # DETERMINE RIGHT PRICE TO SELL AT
-
-            if(count_asks > )
-
-            ##### PSUEDO CHECK
-            target_price = api.get_position(ticker).limit_price
-            #####
+            target_price = api.list_orders()[0].stop_price
 
             for ask in asks:
                 if(target_price == ""):
@@ -139,6 +153,7 @@ def decide(asks, bids):
 
                     if(ask_target_price == target_price):
                         if(ask_shares * ask_target_price > 5000):
+                            print("hello")
                         else:
                             api.cancel_all_orders()
 
@@ -163,8 +178,8 @@ def submitOrder(ticker):
 
     print("Market order of | " + str(qty) + " " + ticker + " " + "buy" + " | completed.")
 
-
 while True:
     if(api.get_clock().is_open):
+        initData()
         populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price)
     time.sleep(5)
