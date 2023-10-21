@@ -38,7 +38,6 @@ def initData():
 
     global ask_price
     global bid_price
-    global genji
 
     # Init Webdriver
     options = webdriver.ChromeOptions()
@@ -62,7 +61,6 @@ def initData():
 
     ask_price = (cboe_data.findAll("td", {"class": "book-viewer__ask book-viewer__ask-price book-viewer-price"}))
     bid_price = (cboe_data.findAll("td", {"class": "book-viewer__bid book-viewer__bid-price book-viewer-price"}))
-    genji = "goodbye"
 
 # Populate bids and asks arrays with order size data
 def populateAsksBids(bid_share_count, bid_price, ask_share_count, ask_price):
@@ -119,7 +117,7 @@ def decide(asks, bids):
         ask_share_count = count_asks(asks)
         bid_share_count = count_bids(bids)
 
-        if(ask_share_count > bid_share_count):
+        if(ask_share_count < bid_share_count):
             submitOrder(ticker)
 
     else:
@@ -138,6 +136,7 @@ def decide(asks, bids):
                     ask_shares = (int(ask[0].replace(',', '')))
                     ask_target_price = (float(ask[1].replace(',', '')))
 
+                    # CHECK IF TOTAL VALUE OF POSITION IS > $5000
                     if((ask_shares * ask_target_price) > 5000 and len(api.list_positions()) > 0):
                         api.cancel_all_orders()
                         time.sleep(2)
@@ -152,9 +151,7 @@ def decide(asks, bids):
                     ask_target_price = (float(ask[1].replace(',', '')))
 
                     if(ask_target_price == target_price):
-                        if(ask_shares * ask_target_price > 5000):
-                            print("hello")
-                        else:
+                        if(ask_shares * ask_target_price < 5000):
                             api.cancel_all_orders()
 
 # get last close for param: ticker
